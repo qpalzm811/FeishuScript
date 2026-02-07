@@ -1,11 +1,17 @@
 import os
-import requests
 import json
 import logging
+import requests
+import sys
+
+# Add local libs to path for baidu-autosave dependencies
+libs_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "baidu-autosave", "libs")
+if os.path.exists(libs_path):
+    sys.path.insert(0, libs_path)
+
 from flask import Flask, request, jsonify
 from feishu_uploader import FeishuUploader
-from baidupcs_py.baidupcs import BaiduPCS
-from baidupcs_py.common.downloader import MeDownloader
+from urllib.parse import quote
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -17,6 +23,31 @@ app = Flask(__name__)
 # Ideally load from a separate config file
 CONFIG_FILE = "integration_config.json"
 BAIDU_CONFIG = "baidu-autosave/config/config.json"
+
+class SimpleBaiduPCS:
+    def __init__(self, bduss, stoken=None):
+        self.session = requests.Session()
+        self.session.cookies.update({"BDUSS": bduss})
+        if stoken:
+            self.session.cookies.update({"STOKEN": stoken})
+        self.session.headers.update({
+            "User-Agent": "netdisk;7.0.3.2;PC;PC-Windows;10.0.19041;WindowsBaiduYunGuanJia"
+        })
+
+    def download_file(self, remote_path, local_path):
+        api_url = "http://pcs.baidu.com/rest/2.0/pcs/file"
+        params = {
+            "method": "download",
+            "path": remote_path,
+            "app_id": "250528"
+        }
+        
+        logger.info(f"Downloading from Baidu: {remote_path}")
+        with self.session.get(api_url, params=params, stream=True) as r:
+            r.raise_for_status()
+            with open(local_path, 'wb') as f:
+                for chunk in r.iter_content(chunk_size=8192):
+                    f.write(chunk)
 
 def load_config():
     if os.path.exists(CONFIG_FILE):
@@ -38,12 +69,9 @@ def get_baidu_pcs():
         if os.path.exists(BAIDU_CONFIG):
             with open(BAIDU_CONFIG, 'r', encoding='utf-8') as f:
                 baidu_conf = json.load(f)
-                # Ensure we handle the structure correctly
-                # config.json -> baidu -> users -> "id" -> cookies -> BDUSS
                 users = baidu_conf.get("baidu", {}).get("users", {})
                 if not users:
                     return None
-                # Pick the first user or current user
                 current_user_id = baidu_conf.get("baidu", {}).get("current_user")
                 user = users.get(current_user_id) if current_user_id else list(users.values())[0]
                 
@@ -51,7 +79,7 @@ def get_baidu_pcs():
                 stoken = user.get("stoken") or user.get("cookies", {}).get("STOKEN")
                 
                 if bduss:
-                    return BaiduPCS(bduss=bduss, stoken=stoken)
+                    return SimpleBaiduPCS(bduss=bduss, stoken=stoken)
     except Exception as e:
         logger.error(f"Failed to load Baidu config: {e}")
     return None
@@ -85,47 +113,7 @@ def handle_baidu_event():
             local_path = os.path.join(download_dir, filename)
             
             logger.info(f"Downloading {remote_path} to {local_path}...")
-            # Use BaiduPCS to download
-            # For simplicity, using one thread
-            # download_file(url, local_path) but pcs.download returns a generator or bytes?
-            # pcs.download_file is not a direct method in some versions.
-            # Using MeDownloader or verify API.
-            # Let's check baidupcs-py usage. 
-            # Usually `pcs.download` streams content.
-            
-            # Simple download implementation using stream
-            with open(local_path, 'wb') as f:
-                offset = 0
-                while True:
-                    # chunk size 1MB
-                    chunk = pcs.file_stream(remote_path, offset=offset)
-                    if not chunk:
-                        break
-                    # Wait, file_stream returns a request object or content?
-                    # Actually baidupcs-py `file_stream` might be complicated.
-                    # Best to use the `download` method if available or construct usage.
-                    # Let's try simpler `download` logic if library supports it.
-                    # Standard baidupcs-py usually has `file_stream` returning bytes or iterator.
-                    # Let's assume simplest:
-                    f.write(chunk) # This is likely wrong if chunk is not bytes
-                    break # Placeholder, need real implementation
-            
-            # Since I can't verify baidupcs-py version API easily without running, 
-            # I'll rely on `pcs.list_files` to get link and `requests`.
-            dlink = pcs.download_link([remote_path])
-            if dlink and isinstance(dlink, list) and len(dlink) > 0:
-                 url = dlink[0].dlink
-                 # Need headers including User-Agent
-                 headers = {"User-Agent": "netdisk;7.0.3.2;PC;PC-Windows;10.0.19041;WindowsBaiduYunGuanJia"}
-                 # Need cookies
-                 cookies = {"BDUSS": pcs.bduss}
-                 
-                 logger.info(f"Downloading from link: {url[:50]}...")
-                 with requests.get(url, stream=True, headers=headers, cookies=cookies) as r:
-                     r.raise_for_status()
-                     with open(local_path, 'wb') as f:
-                         for chunk in r.iter_content(chunk_size=8192):
-                             f.write(chunk)
+            pcs.download_file(remote_path, local_path)
             
             logger.info(f"Downloaded. Uploading to Feishu...")
             target_folder = config.get("feishu_folder_token")

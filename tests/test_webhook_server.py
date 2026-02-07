@@ -7,14 +7,7 @@ import json
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-# Mock baidupcs_py before importing webhook_server
-mock_baidupcs = MagicMock()
-sys.modules['baidupcs_py'] = mock_baidupcs
-sys.modules['baidupcs_py.baidupcs'] = mock_baidupcs
-sys.modules['baidupcs_py.common'] = mock_baidupcs
-sys.modules['baidupcs_py.common.downloader'] = mock_baidupcs
-
-from webhook_server import app
+from webhook_server import app, SimpleBaiduPCS
 
 class TestWebhookServer(unittest.TestCase):
     def setUp(self):
@@ -34,10 +27,6 @@ class TestWebhookServer(unittest.TestCase):
         
         mock_pcs = MagicMock()
         mock_get_pcs.return_value = mock_pcs
-        mock_pcs.download_link.return_value = [MagicMock(dlink="http://baidu.com/file")]
-        mock_pcs.bduss = "bduss"
-        
-        mock_get.return_value.__enter__.return_value.iter_content.return_value = [b'chunk']
         
         # FIX: Set return value for upload_file to a dict so jsonify works
         mock_uploader.upload_file.return_value = {"code": 0, "msg": "success"}
@@ -49,6 +38,7 @@ class TestWebhookServer(unittest.TestCase):
         self.assertEqual(len(res_json['results']), 1)
         self.assertEqual(res_json['results'][0]['status'], 'success')
         
+        mock_pcs.download_file.assert_called_with("/test/video.mp4", os.path.join("tmp", "video.mp4"))
         mock_uploader.upload_file.assert_called()
 
     @patch('webhook_server.get_feishu_uploader')

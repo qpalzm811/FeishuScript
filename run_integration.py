@@ -4,6 +4,11 @@ import sys
 # Ensure current directory is in path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
+# Add local libs to path for baidu-autosave dependencies
+libs_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "baidu-autosave", "libs")
+if os.path.exists(libs_path):
+    sys.path.insert(0, libs_path)
+
 from webhook_server import app
 
 if __name__ == "__main__":

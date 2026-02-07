@@ -1,0 +1,7 @@
+{
+    "feishu_app_id": "cli_test_app",
+    "feishu_app_secret": "test_secret",
+    "feishu_folder_token": "fld_test_token",
+    "download_dir": "test_downloads",
+    "port": 54321
+}
