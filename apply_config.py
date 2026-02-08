@@ -8,10 +8,6 @@ UNIFIED_CONFIG = "config.yaml"
 INTEGRATION_CONFIG = "integration_config.json"
 BAIDU_CONFIG = "baidu-autosave/config/config.json"
 BAIDU_CONFIG_TEMPLATE = "baidu-autosave/config/config.template.json"
-# Bililive config is complex, usually in AppData or executable dir. 
-# For now we only generate a JSON fragment or print instructions for Bilibili,
-# as modifying its config externally while running might be risky or require locating the specific profile.
-# However, we can try to look for known paths.
 
 def load_yaml(path):
     if not os.path.exists(path):
@@ -129,9 +125,6 @@ def main():
     update_baidu_config(config)
     
     print("\nConfiguration applied successfully!")
-    print("For Bilibili Recorder:")
-    print("1. Please define Webhook URL manually in Settings -> Webhook -> URL 1: " + config.get('bilibili', {}).get('webhook_url', ''))
-    print("2. Add rooms in the GUI as usual, or check 'BililiveRecorder/config.json' if it exists.")
 
 if __name__ == "__main__":
     main()
