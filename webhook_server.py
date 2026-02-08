@@ -130,39 +130,6 @@ def handle_baidu_event():
 
     return jsonify({"results": results})
 
-@app.route('/bilibili_event', methods=['POST'])
-def handle_bilibili_event():
-    """
-    Expects BililiveRecorder Webhook Payload.
-    Usually: { "EventType": "FileClosed", "EventData": { "RelativePath": "...", "Path": "..." } }
-    """
-    data = request.json
-    logger.info(f"Received Bilibili event: {data.get('EventType')}")
-    
-    if data.get("EventType") == "FileClosed":
-        file_info = data.get("EventData", {})
-        file_path = file_info.get("Path")
-        
-        if file_path and os.path.exists(file_path):
-            try:
-                uploader = get_feishu_uploader()
-                if not uploader:
-                     return jsonify({"error": "Feishu uploader not configured"}), 500
-                     
-                config = load_config()
-                target_folder = config.get("feishu_folder_token")
-                
-                logger.info(f"Uploading {file_path} to Feishu...")
-                res = uploader.upload_file(file_path, target_folder)
-                logger.info(f"Uploaded: {res}")
-                return jsonify({"status": "success", "feishu_res": res})
-            except Exception as e:
-                logger.error(f"Error uploading {file_path}: {e}")
-                return jsonify({"error": str(e)}), 500
-        else:
-             logger.warning(f"File not found or invalid path: {file_path}")
-    
-    return jsonify({"status": "ignored"})
 
 if __name__ == '__main__':
     # Initialize empty config if not exists

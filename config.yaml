@@ -41,22 +41,23 @@ baidu:
   local_download_dir: "./temp_downloads"
 
 # ------------------------------------------
-# 3. B站录播配置 (Bilibili Recording)
+# 3. B站动态监控配置 (Bilibili Dynamics)
 # ------------------------------------------
 bilibili:
-  # Webhook 回调地址 (通常保持默认即可，指向本机的集成服务)
-  webhook_url: "http://127.0.0.1:12345/bilibili_event"
-
-  # 全局录制画质 (例如: "avc10000,hevc10000")
-  quality: "avc10000,hevc10000"
-
-  # 监控的直播间列表
-  rooms:
-    - room_id: 123456
-      auto_record: true
+  # 监控的 Up 主 UID 列表
+  users:
+    - 208259  # 示例: B站官方账号
     
-    - room_id: 654321
-      auto_record: true
+  # 检查间隔 (秒)
+  check_interval: 300
+  
+  # 认证信息 (可选，用于获取充电专属/仅粉丝可见动态)
+  # 请从浏览器 Cookies 中获取 SESSDATA, bili_jct, buvid3
+  cookies:
+    sessdata: ""
+    bili_jct: ""
+    buvid3: ""
+  
 
 # ------------------------------------------
 # 4. 系统/高级配置 (System)

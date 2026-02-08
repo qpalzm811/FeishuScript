@@ -48,13 +48,21 @@ python run_integration.py
     *   `pwd`: 提取码（如果有）
     *   `save_to`: 想要保存到百度网盘内的路径（也是临时下载路径的子目录）
 
-### 2.3 B站录播 (Bilibili)
-*   **配置 Webhook**:
-    虽然 `config.yaml` 中有 Bilibili 设置，但由于录播姬 (BililiveRecorder) 是图形界面程序，您需要**手动**在录播姬软件中设置 Webhook：
-    1.  打开录播姬 -> 设置 -> Webhook
-    2.  勾选“启用 Webhook”
-    3.  在 URL 1 中填入 `config.yaml` 中显示的地址 (通常是 `http://127.0.0.1:12345/bilibili_event`)
-    4.  勾选“录制文件关闭”事件。
+### 2.3 B站动态监控 (Bilibili)
+*   **配置 Up 主**:
+    无需使用第三方软件。直接在 `config.yaml` 的 `bilibili -> users` 列表中填入您关注的 Up 主 **UID**。
+    *   **如何获取 UID**: 打开 Up 主的主页，URL 中 `space.bilibili.com/` 后面的数字即为 UID。
+    *   **检查频率**: 默认为 300 秒（5分钟）检查一次，可修改 `check_interval`。
+
+*   **工作原理**:
+    系统会在后台每隔设定时间轮询一次。一旦发现新发布的动态（支持文字、图文、视频、转发），会自动将其内容抓取并生成 Markdown 文件，然后上传到飞书。
+    *   **本地归档**: 所有下载的动态和图片都会保存在项目根目录下的 `downloaded_dynamics` 文件夹中，按 `[日期] 作者_ID` 格式命名。
+
+*   **充电/专属动态支持**:
+    如果您需要获取“充电会员专属”或“仅粉丝可见”的动态，请必须在 `config.yaml` 中配置您的 Cookies：
+    *   `sessdata`: 关键凭证，从浏览器 `Application -> Cookies` 中获取。
+    *   `bili_jct`: (CSRF Token) 同上。
+    *   `buvid3`: 设备标识，同上。
 
 ---
 

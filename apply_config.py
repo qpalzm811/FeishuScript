@@ -27,7 +27,10 @@ def update_integration_config(config):
         "feishu_app_secret": config.get('feishu', {}).get('app_secret', ''),
         "feishu_folder_token": config.get('feishu', {}).get('folder_token', ''),
         "download_dir": config.get('baidu', {}).get('local_download_dir', 'temp_downloads'),
-        "port": config.get('system', {}).get('port', 12345)
+        "port": config.get('system', {}).get('port', 12345),
+        "bilibili_users": config.get('bilibili', {}).get('users', []),
+        "bilibili_interval": config.get('bilibili', {}).get('check_interval', 300),
+        "bilibili_cookies": config.get('bilibili', {}).get('cookies', {})
     }
     
     with open(INTEGRATION_CONFIG, 'w', encoding='utf-8') as f:

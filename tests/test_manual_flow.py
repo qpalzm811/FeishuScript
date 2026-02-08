@@ -51,8 +51,9 @@ class TestManualFlow(unittest.TestCase):
                 "local_download_dir": "test_downloads"
             },
             "bilibili": {
-                "webhook_url": "http://127.0.0.1:12345/bilibili_event",
-                "quality": "avc"
+                "users": [12345, 67890],
+                "check_interval": 60,
+                "cookies": {"sessdata": "dummy"}
             },
             "system": {
                 "port": 54321,
@@ -140,36 +141,6 @@ class TestManualFlow(unittest.TestCase):
         mock_pcs_instance.download_file.assert_called()
         mock_uploader.upload_file.assert_called()
         print("✓ Baidu Webhook handled successfully (Download -> Upload)")
-
-        # 4. Simulate Bilibili Webhook Trigger
-        print("[Step 3] Triggering Bilibili Webhook...")
-        # Create a dummy file for bilibili to upload
-        dummy_bili_file = "test_bili.flv"
-        with open(dummy_bili_file, 'w') as f:
-            f.write("bili content")
-            
-        try:
-            bili_payload = {
-                "EventType": "FileClosed",
-                "EventData": {
-                    "Path": os.path.abspath(dummy_bili_file)
-                }
-            }
-            # Mock get_feishu_uploader again because it's called inside the route
-            # Actually patch mock_get_uploader is global for the test method
-            
-            resp = self.client.post('/bilibili_event', json=bili_payload)
-            self.assertEqual(resp.status_code, 200)
-            
-            # Verify upload called for bilibili file
-            # Check last call
-            args, _ = mock_uploader.upload_file.call_args
-            self.assertIn("test_bili.flv", args[0])
-            print("✓ Bilibili Webhook handled successfully (Upload)")
-            
-        finally:
-            if os.path.exists(dummy_bili_file):
-                os.remove(dummy_bili_file)
 
         print("=== Test Complete: All Systems Go ===")
 

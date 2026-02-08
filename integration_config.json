@@ -3,5 +3,13 @@
     "feishu_app_secret": "test_secret",
     "feishu_folder_token": "fld_test_token",
     "download_dir": "test_downloads",
-    "port": 54321
+    "port": 54321,
+    "bilibili_users": [
+        12345,
+        67890
+    ],
+    "bilibili_interval": 60,
+    "bilibili_cookies": {
+        "sessdata": "dummy"
+    }
 }
